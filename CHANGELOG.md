@@ -7,11 +7,20 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ---
 
+## [0.2.0] - 2026-10-11
+
+### Añadido
+- Archivo nativo para agentes de IA ([SKILL.md](file:///home/LGK36T/workspace/skills/database_manager/SKILL.md)) con directrices de migraciones reversibles, prevención de mutaciones destructivas, anti-N+1 e integridad transaccional.
+- Licencia de código abierto MIT ([LICENSE](file:///home/LGK36T/workspace/skills/database_manager/LICENSE)).
+
+### Modificado
+- Reorientación completa del proyecto de módulo genérico a **Skill para agentes de IA** en [README.md](file:///home/LGK36T/workspace/skills/database_manager/README.md).
+
+---
+
 ## [0.1.0] - 2026-10-11
 
 ### Añadido
 - Inicialización del repositorio Git y configuración base del proyecto.
-- Documentación inicial del gestor de base de datos ([README.md](file:///home/LGK36T/workspace/skills/database_manager/README.md)).
-- Registro de control de versiones y cambios ([CHANGELOG.md](file:///home/LGK36T/workspace/skills/database_manager/CHANGELOG.md)).
+- Documentación inicial y registro de control de cambios.
 - Configuración de exclusiones de archivos para control de versiones (`.gitignore`).
-- Definición de estructura recomendada para migraciones, seeds y esquemas.
