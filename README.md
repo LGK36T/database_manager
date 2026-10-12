@@ -1,84 +1,52 @@
-# Database Manager
+# Database Manager (AI Agent Skill)
 
-Módulo responsable de la administración, modelado, migraciones, optimización y gestión del ciclo de vida de las bases de datos en el sistema.
-
----
-
-## 📌 Descripción General
-
-**Database Manager** proporciona el marco de trabajo para gestionar los esquemas de bases de datos relacionales y no relacionales, garantizar la integridad de los datos, orquestar migraciones seguras y proveer estrategias de respaldo y recuperación. Actúa como la fuente centralizada de verdad para el almacenamiento de datos persistentes del ecosistema.
+Skill especializada para guiar a los agentes de Inteligencia Artificial al diseñar esquemas, gestionar migraciones, optimizar consultas y administrar la persistencia de datos con máxima seguridad.
 
 ---
 
-## 🎯 Objetivos y Responsabilidades
+## 📌 ¿Qué es este Skill?
 
-- **Control de Versiones y Migraciones:** Automatización de esquemas evolutivos mediante scripts de migración ordenados y reversibles.
-- **Modelado de Datos:** Definición y mantenimiento de modelos conceptuales, lógicos y físicos.
-- **Rendimiento e Indexación:** Optimización de consultas, creación de índices estratégicos y análisis de cuellos de botella.
-- **Pools de Conexiones:** Gestión eficiente de conexiones concurrentes y balanceo de carga en réplicas de lectura.
-- **Respaldos y Seguridad:** Políticas de snapshots, backups programados, cifrado en reposo y en tránsito.
+**Database Manager** proporciona a los agentes de IA (como Antigravity, Claude Code, Cursor, Copilot, etc.) un conjunto riguroso de reglas y directrices para prevenir pérdidas de datos, bloqueos de tablas y degradaciones de rendimiento durante el desarrollo y mantenimiento de bases de datos.
+
+La especificación completa del comportamiento del agente se encuentra en [SKILL.md](file:///home/LGK36T/workspace/skills/database_manager/SKILL.md).
 
 ---
 
-## 📂 Estructura del Proyecto
+## 🎯 Directrices que impone a la IA
+
+- **Migraciones Reversibles:** Obligatoriedad de scripts `up` y `down` para garantizar rollbacks seguros e idempotentes.
+- **Prevención de Destrucción:** Bloqueo estricto de comandos destructivos (`DROP`, `TRUNCATE`) sin aprobación explícita.
+- **Optimización de Rendimiento:** Prevención activa de problemas de N+1 queries, indexación adecuada y paginación en todas las listas.
+- **Integridad y Transacciones:** Agrupación de operaciones dependientes en transacciones ACID con manejo de bloqueos y fallos.
+- **Sanitización Total:** Uso mandatorio de consultas parametrizadas o capas ORM seguras contra inyección SQL.
+
+---
+
+## 📂 Contenido del Repositorio
 
 ```text
 database_manager/
-├── migrations/          # Scripts de migración (up / down)
-├── seeds/               # Datos iniciales y fixtures de prueba
-├── schemas/             # Definiciones de esquemas y tablas
-├── config/              # Configuraciones de conexión y pools
-├── scripts/             # Scripts de mantenimiento, backups y restauración
-├── tests/               # Pruebas de integridad y validación de esquemas
-├── .gitignore           # Exclusiones de control de versiones
-├── CHANGELOG.md         # Historial de versiones y cambios
-└── README.md            # Documentación general del módulo
+├── SKILL.md             # Instrucciones principales para el agente de IA
+├── CHANGELOG.md         # Historial de cambios del skill
+├── LICENSE              # Licencia de código abierto (MIT)
+├── README.md            # Documentación y descripción del skill
+└── .gitignore           # Exclusiones de control de versiones
 ```
 
 ---
 
-## 🚀 Inicio Rápido
+## 🚀 Uso e Integración
 
-### Requisitos Previos
-
-- Servidor de base de datos instalado o contenedor Docker correspondiente (PostgreSQL, MySQL, MongoDB, etc.).
-- Herramienta de migración / CLI configurada.
-- Archivo de variables de entorno `.env` con las credenciales de acceso a la base de datos.
-
-### Configuración
-
-1. Clonar el repositorio:
-   ```bash
-   git clone <URL_DEL_REPOSITORIO>/database_manager.git
-   cd database_manager
-   ```
-
-2. Configurar credenciales y variables de entorno:
-   ```bash
-   cp .env.example .env
-   ```
-
-3. Ejecutar migraciones iniciales:
-   ```bash
-   # Ejemplo según el gestor configurado
-   npm run migrate:up
-   # o bien: python manage.py migrate / make migrate
-   ```
-
----
-
-## 🔄 Flujo de Trabajo con Git
-
-1. Para cada cambio de esquema, crear una rama dedicada:
-   ```bash
-   git checkout -b migration/nombre-de-la-migracion
-   ```
-2. Asegurar que cada migración cuente con su operación inversa (rollback/down).
-3. Documentar los cambios en [CHANGELOG.md](file:///home/LGK36T/workspace/skills/database_manager/CHANGELOG.md).
-4. Enviar cambios mediante Pull Request / Merge Request.
+### En Google Antigravity / Asistentes IA
+Coloca este repositorio dentro del directorio de skills de tu espacio de trabajo:
+```bash
+.agents/skills/database_manager/
+# o ~/.gemini/antigravity-cli/skills/database_manager/
+```
+El agente descubrirá automáticamente el archivo `SKILL.md` y aplicará estas pautas de manera progresiva cuando interactúe con modelos de datos, migraciones o consultas.
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto está bajo los términos y directrices definidos por el equipo de desarrollo.
+Este proyecto está bajo la licencia [MIT](file:///home/LGK36T/workspace/skills/database_manager/LICENSE).
