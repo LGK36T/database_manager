@@ -20,7 +20,7 @@ y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Especificación del flujo de extremo a extremo: Front -> API -> Worker (Python) -> BD -> API -> Front.
 
 ### Modificado
-- Actualizado [SKILL.md](./SKILL.md) con flujo de trabajo por fases de 7 pasos, verificación con `EXPLAIN ANALYZE` y reglas estrictas para agentes de IA.
+- Actualizado [SKILL.md](./SKILL.md) con flujo de trabajo por fases de 7 pasos, verificación con `EXPLAIN ANALYZE` y reglas estrictas de persistencia.
 - Actualizado [README.md](./README.md) con la nueva estructura de repositorios y principios de persistencia.
 
 ---

@@ -1,6 +1,6 @@
 # Database Manager
 
-Skill de desarrollo y persistencia en bases de datos relacionales para agentes de IA y desarrolladores. Define estándares de modelado, migraciones reproducibles, Stored Procedures en PL/pgSQL y concurrencia segura para PostgreSQL 17 con Node.js y Python.
+Skill de persistencia y modelado relacional. Define estándares de arquitectura de datos, migraciones reproducibles, Stored Procedures en PL/pgSQL y concurrencia segura para PostgreSQL 17 con Node.js y Python.
 
 ---
 

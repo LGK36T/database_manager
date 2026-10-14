@@ -3,7 +3,7 @@
 > **Versión:** 2.0  
 > **Motor Principal:** PostgreSQL 17  
 > **Drivers & Clientes:** Node.js 22+ (`pg`), Python 3.12+ (`psycopg` v3 con `psycopg_pool` / `asyncpg`)  
-> **Propósito:** Especificación de ingeniería y directrices para agentes de IA y desarrolladores al diseñar esquemas, escribir migraciones reproducibles, implementar procedimientos almacenados de alto rendimiento y garantizar la consistencia transaccional con el backend (`backend_manager`), frontend (`frontend_manager`) y workers asíncronos (`workers_manager`).
+> **Propósito:** Especificación técnica para desarrolladores al diseñar esquemas, escribir migraciones reproducibles, implementar procedimientos almacenados de alto rendimiento y coordinar la persistencia con el backend (`backend_manager`), frontend (`frontend_manager`) y workers asíncronos (`workers_manager`).
 
 ---
 
@@ -29,7 +29,7 @@
 
 ## 1. Visión General y Filosofía de Persistencia
 
-En nuestro ecosistema, la base de datos relacional no es tratada como un simple almacén pasivo de bytes, sino como la **fuente de verdad soberana del negocio**. Para garantizar robustez en producción y desacoplar la lógica de almacenamiento de los lenguajes de aplicación (Node.js en el backend, Python en los workers y React en el frontend), adoptamos los siguientes principios:
+La persistencia se centraliza en PostgreSQL 17 como fuente de verdad del sistema. Para asegurar consistencia y desacoplar el acceso a datos entre servicios (Express en backend, Python en workers y React en frontend), se aplican los siguientes principios:
 
 1. **Encapsulamiento en Stored Procedures:** La capa de aplicación no compone consultas SQL dinámicas ni escribe sentencias `SELECT *` arbitrarias. Toda interacción de lectura y mutación se efectúa a través de funciones y Stored Procedures en PL/pgSQL del esquema `app`.
 2. **Serialización JSONB Nativa:** Las funciones PL/pgSQL devuelven el resultado formateado en `jsonb`, delegando la serialización al motor C de PostgreSQL (10x más rápido que formatear en Node/Python). Para colecciones, el formato devuelto es `{ data: [...], total: N }`, emparejado con los stores de Zustand del frontend.
@@ -89,11 +89,11 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC;
 
 ## 4. Estrategia de Identificadores (UUID v4 Nativo)
 
-No utilizamos IDs enteros secuenciales (`SERIAL` o `BIGSERIAL`) para entidades expuestas hacia el exterior o procesadas por workers. Las razones son:
-* **Seguridad:** Los IDs enteros exponen el volumen de negocio y son vulnerables a ataques de enumeración (IDOR).
-* **Descentralización:** Los workers y APIs pueden generar identificadores antes de insertar en la base de datos usando `crypto.randomUUID()` en Node.js o `uuid.uuid4()` en Python.
+Se utilizan identificadores UUID v4 (`gen_random_uuid()`) en lugar de enteros autoincrementales (`SERIAL` / `BIGSERIAL`) por dos razones:
+* **Seguridad:** Evita la exposición del volumen de registros y previene ataques de enumeración (IDOR).
+* **Descentralización:** Permite que clientes, APIs y workers generen identificadores válidos antes de la inserción (`crypto.randomUUID()` en Node.js o `uuid.uuid4()` en Python).
 
-En PostgreSQL 17, `gen_random_uuid()` está integrado en el núcleo sin necesidad de instalar `pgcrypto` o `uuid-ossp`:
+En PostgreSQL 17, `gen_random_uuid()` está integrado en el núcleo sin requerir extensiones adicionales:
 
 ```sql
 id UUID PRIMARY KEY DEFAULT gen_random_uuid()
@@ -103,20 +103,20 @@ id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 
 ## 5. Eliminación Lógica (*Soft Delete*) e Índices Parciales
 
-En entornos empresariales la eliminación física (`DELETE FROM ...`) destruye la trazabilidad contable, fiscal y operativa. Por ello, se aplica **Soft Delete** sistemático:
+Para preservar trazabilidad histórica y auditoría, se aplica eliminación lógica en tablas de negocio:
 
 ### Declaración de Columnas
 ```sql
 deleted_at TIMESTAMPTZ DEFAULT NULL
 ```
 
-### Regla Crucial: Índices Parciales para Unicidad
-Si una columna debe ser única (por ejemplo, el correo de un usuario o el código de un producto), una restricción tradicional `UNIQUE (email)` impedirá que un usuario eliminado vuelva a registrarse con el mismo correo.
+### Índices Parciales para Unicidad
+Si una columna debe ser única (por ejemplo, el correo de un usuario o el código de un producto), una restricción tradicional `UNIQUE (email)` impediría registrar nuevamente un valor previamente eliminado.
 
-**Patrón Obligatorio:** Usar un índice único parcial condicionado a que el registro esté activo (`deleted_at IS NULL`):
+Se utiliza un índice único parcial condicionado a filas activas (`deleted_at IS NULL`):
 
 ```sql
--- CORRECTO: Permite re-crear un registro con el mismo correo si el anterior fue eliminado
+-- Permite reutilizar el correo si el registro anterior fue eliminado lógicamente
 CREATE UNIQUE INDEX uq_users_email_active
 ON app.users (email)
 WHERE deleted_at IS NULL;
@@ -131,12 +131,10 @@ WHERE deleted_at IS NULL;
 
 ## 6. Concurrencia y Control de Bloqueos (`FOR UPDATE SKIP LOCKED`)
 
-Cuando múltiples instancias de workers en Python consumen tareas en paralelo, el mecanismo tradicional `SELECT ... WHERE status = 'pending' LIMIT 1` provoca colisiones o condiciones de carrera si dos workers seleccionan la misma fila simultáneamente.
-
-Si se utiliza un bloqueo tradicional `FOR UPDATE`, el segundo worker se quedará congelado esperando que el primero libere el registro.
+Cuando múltiples workers consumen tareas en paralelo, `SELECT ... WHERE status = 'pending' LIMIT 1` genera colisiones y condiciones de carrera si dos procesos seleccionan la misma fila simultáneamente. Un bloqueo tradicional `FOR UPDATE` provoca espera pasiva y contención.
 
 ### El Patrón `SKIP LOCKED`
-`FOR UPDATE SKIP LOCKED` instruye a PostgreSQL para que bloquee la primera fila disponible y, si otra fila ya está bloqueada por otro worker, la salte de inmediato sin esperar:
+`FOR UPDATE SKIP LOCKED` instruye a PostgreSQL a bloquear la primera fila disponible y omitir de inmediato las que ya se encuentren bloqueadas por otras transacciones:
 
 ```sql
 -- Reclamar de forma atómica y segura la siguiente tarea pendiente
@@ -160,7 +158,7 @@ WHERE tasks.jobs.id = next_task.id
 RETURNING tasks.jobs.*;
 ```
 
-> **Garantía:** Con este patrón, 50 workers concurrentes pueden consultar la cola simultáneamente con cero bloqueos y sin procesar dos veces el mismo trabajo.
+> Este patrón permite que múltiples workers concurrentes consuman la cola en paralelo sin bloqueos ni contención de transacciones.
 
 ---
 
