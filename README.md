@@ -1,52 +1,53 @@
-# Database Manager (AI Agent Skill)
+# Database Manager
 
-Skill especializada para guiar a los agentes de Inteligencia Artificial al diseñar esquemas, gestionar migraciones, optimizar consultas y administrar la persistencia de datos con máxima seguridad.
-
----
-
-## 📌 ¿Qué es este Skill?
-
-**Database Manager** proporciona a los agentes de IA (como Antigravity, Claude Code, Cursor, Copilot, etc.) un conjunto riguroso de reglas y directrices para prevenir pérdidas de datos, bloqueos de tablas y degradaciones de rendimiento durante el desarrollo y mantenimiento de bases de datos.
-
-La especificación completa del comportamiento del agente se encuentra en [SKILL.md](file:///home/LGK36T/workspace/skills/database_manager/SKILL.md).
+Skill de persistencia y modelado relacional. Define estándares de arquitectura de datos, migraciones reproducibles, Stored Procedures en PL/pgSQL y concurrencia segura para PostgreSQL 17 con Node.js y Python.
 
 ---
 
-## 🎯 Directrices que impone a la IA
+## Arquitectura y Principios
 
-- **Migraciones Reversibles:** Obligatoriedad de scripts `up` y `down` para garantizar rollbacks seguros e idempotentes.
-- **Prevención de Destrucción:** Bloqueo estricto de comandos destructivos (`DROP`, `TRUNCATE`) sin aprobación explícita.
-- **Optimización de Rendimiento:** Prevención activa de problemas de N+1 queries, indexación adecuada y paginación en todas las listas.
-- **Integridad y Transacciones:** Agrupación de operaciones dependientes en transacciones ACID con manejo de bloqueos y fallos.
-- **Sanitización Total:** Uso mandatorio de consultas parametrizadas o capas ORM seguras contra inyección SQL.
+- **Esquematización y Aislamiento:** Separación estricta en esquemas `app` (lógica de negocio), `tasks` (colas asíncronas) y `audit` (trazabilidad y logs inmutables).
+- **Paridad con Backend y Frontend:** Stored Procedures que serializan nativamente a `jsonb`, devolviendo `{ data: T[], total: number }` en colecciones para mapeo directo con los stores de Zustand.
+- **Concurrencia Segura con SKIP LOCKED:** Procedimientos de reclamo de tareas para workers en Python (`app.async_task_claim`) que evitan bloqueos contenciosos y condiciones de carrera entre múltiples réplicas.
+- **Identificadores UUID v4:** Uso exclusivo de `gen_random_uuid()` como clave primaria para evitar problemas de enumeración (IDOR) y facilitar la generación descentralizada.
+- **Eliminación Lógica e Índices Parciales:** Manejo de soft delete mediante `deleted_at` combinado con índices únicos parciales (`WHERE deleted_at IS NULL`) que permiten recrear registros sin colisiones.
+- **Migraciones Reversibles:** Estructura mandatoria de fases `up` y `down` garantizando rollbacks limpios e idempotentes.
 
 ---
 
-## 📂 Contenido del Repositorio
+## Estructura del Repositorio
 
 ```text
 database_manager/
-├── SKILL.md             # Instrucciones principales para el agente de IA
-├── CHANGELOG.md         # Historial de cambios del skill
-├── LICENSE              # Licencia de código abierto (MIT)
-├── README.md            # Documentación y descripción del skill
-└── .gitignore           # Exclusiones de control de versiones
+├── SKILL.md                          # Instrucciones y flujo de trabajo principal
+├── references/                       # Documentación técnica de referencia
+│   └── technical-architecture.md     # Especificación técnica exhaustiva
+├── resources/
+│   └── templates/                    # Plantillas de código reutilizables
+│       ├── migration-up-down.template.sql   # Migración reversible segura
+│       ├── table-with-audit.template.sql    # Tabla con auditoría automática y soft delete
+│       ├── stored-procedures.template.sql   # SPs CRUD con serialización JSONB
+│       ├── task-queue-schema.template.sql   # Esquema y funciones para colas con SKIP LOCKED
+│       └── python-db-pool.template.py       # Pool asíncrono en Python con psycopg v3
+├── CHANGELOG.md                      # Historial de cambios
+├── LICENSE                           # Licencia MIT
+└── README.md                         # Este documento
 ```
 
 ---
 
-## 🚀 Uso e Integración
+## Instalación y Uso
 
-### En Google Antigravity / Asistentes IA
-Coloca este repositorio dentro del directorio de skills de tu espacio de trabajo:
+Colocar este directorio dentro de la ruta de skills del entorno de trabajo:
+
 ```bash
 .agents/skills/database_manager/
-# o ~/.gemini/antigravity-cli/skills/database_manager/
 ```
-El agente descubrirá automáticamente el archivo `SKILL.md` y aplicará estas pautas de manera progresiva cuando interactúe con modelos de datos, migraciones o consultas.
+
+Para consultar el flujo de trabajo completo, ver [SKILL.md](./SKILL.md).
 
 ---
 
-## 📄 Licencia
+## Licencia
 
-Este proyecto está bajo la licencia [MIT](file:///home/LGK36T/workspace/skills/database_manager/LICENSE).
+[MIT](./LICENSE)
