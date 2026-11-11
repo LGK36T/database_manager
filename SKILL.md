@@ -76,10 +76,17 @@ SELECT app.entity_get_all(50, 0);
 ```
 Validar que no existan lecturas secuenciales completas (*Seq Scan*) en tablas grandes y que los índices respondan adecuadamente.
 
+### 8. Pruebas Transaccionales de Stored Procedures (Obligatorio)
+- Ubicación: `database/tests/sp_{entity}_test.sql`.
+- Probar invariablemente cada procedimiento almacenado dentro de un bloque `BEGIN; ... ROLLBACK;`.
+- Validar inserciones, retornos JSONB estructurados (`to_jsonb()`, `{ data, total }`), integridad referencial y soft delete.
+- Referencia: Skill `testing_manager` en `/home/LGK36T/workspace/skills/testing_manager` y [sp-test.template.sql](/home/LGK36T/workspace/skills/testing_manager/resources/templates/sp-test.template.sql).
+
 ---
 
 ## Reglas Estrictas
 
+- **Todo debe tener test y pasarlo:** Ningún Stored Procedure o migración se integra sin haber superado las pruebas transaccionales con 0 fallos.
 - Prohibido el uso de sentencias destructivas (`DROP TABLE`, `DROP DATABASE`, `TRUNCATE`) en migraciones directas.
 - Toda interacción con la base de datos debe ejecutarse mediante Stored Procedures del esquema `app`.
 - Jamás concatenar cadenas para construir consultas SQL; utilizar siempre parámetros posicionales (`$1`, `$2` o `%s`).
@@ -92,4 +99,6 @@ Validar que no existan lecturas secuenciales completas (*Seq Scan*) en tablas gr
 ## Referencias y Plantillas
 
 - [Guía de Arquitectura Técnica](./references/technical-architecture.md)
+- [Skill Testing Manager](/home/LGK36T/workspace/skills/testing_manager/SKILL.md)
 - [Plantillas de Código SQL y Python](./resources/templates/)
+
